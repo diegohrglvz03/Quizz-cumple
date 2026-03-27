@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎂 El Gran Quiz del Cumpleaños</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d2b;
+    --card: #1a1a40;
+    --accent1: #ff6b6b;
+    --accent2: #ffd93d;
+    --accent3: #6bcb77;
+    --accent4: #4d96ff;
+    --purple: #c77dff;
+    --white: #ffffff;
+    --radius: 20px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    font-family: 'Nunito', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Stars background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(255,107,107,0.08) 0%, transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(77,150,255,0.08) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  .stars {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 0;
+  }
+  .star {
+    position: absolute;
+    border-radius: 50%;
+    background: white;
+    animation: twinkle var(--d, 3s) ease-in-out infinite alternate;
+    opacity: 0;
+  }
+  @keyframes twinkle {
+    to { opacity: var(--op, 0.7); }
+  }
+
+  .screen {
+    display: none;
+    width: 100%;
+    max-width: 640px;
+    padding: 20px;
+    position: relative;
+    z-index: 1;
+    animation: fadeIn 0.5s ease;
+  }
+  .screen.active { display: flex; flex-direction: column; align-items: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ---- HEADER BAR ---- */
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 640px;
+    padding: 14px 20px;
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    background: rgba(13,13,43,0.9);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .top-bar .logo {
+    font-family: 'Fredoka One', cursive;
+    color: var(--accent2);
+    font-size: 1.3rem;
+    letter-spacing: 1px;
+  }
+  .top-bar .player-tag {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: white;
+    padding: 5px 14px;
+    border-radius: 50px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    display: none;
+  }
+  .top-bar .player-tag.show { display: block; }
+
+  /* ---- CARD ---- */
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 32px 28px;
+    width: 100%;
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    text-align: center;
+  }
+
+  h1 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 2.2rem;
+    color: var(--accent2);
+    line-height: 1.2;
+    margin-bottom: 10px;
+  }
+  h2 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.5rem;
+    color: white;
+    margin-bottom: 16px;
+  }
+  p {
+    color: rgba(255,255,255,0.75);
+    line-height: 1.6;
+    font-size: 1rem;
+  }
+
+  /* ---- MONIGOTE ---- */
+  .mascot-wrap {
+    position: relative;
+    margin: 10px auto 20px;
+    width: 120px;
+    height: 120px;
+  }
+  .mascot {
+    width: 120px;
+    height: 120px;
+    animation: bounce 1.8s ease-in-out infinite;
+  }
+  @keyframes bounce {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .speech-bubble {
+    position: relative;
+    background: white;
+    color: #1a1a40;
+    border-radius: 16px;
+    padding: 12px 18px;
+    font-weight: 800;
+    font-size: 0.95rem;
+    margin-bottom: 20px;
+    line-height: 1.4;
+  }
+  .speech-bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: white;
+  }
+
+  /* ---- INPUT ---- */
+  .input-wrap {
+    width: 100%;
+    margin: 20px 0 10px;
+  }
+  input[type="text"] {
+    width: 100%;
+    padding: 16px 20px;
+    border-radius: 14px;
+    border: 2px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.07);
+    color: white;
+    font-family: 'Nunito', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input[type="text"]::placeholder { color: rgba(255,255,255,0.35); font-weight: 600; }
+  input[type="text"]:focus { border-color: var(--accent4); }
+
+  /* ---- BUTTONS ---- */
+  .btn {
+    display: inline-block;
+    padding: 15px 36px;
+    border-radius: 50px;
+    border: none;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    letter-spacing: 0.5px;
+    width: 100%;
+    margin-top: 14px;
+  }
+  .btn:hover { transform: translateY(-2px); }
+  .btn:active { transform: translateY(0); }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent1), var(--purple));
+    color: white;
+    box-shadow: 0 8px 24px rgba(255,107,107,0.35);
+  }
+  .btn-next {
+    background: linear-gradient(135deg, var(--accent4), var(--purple));
+    color: white;
+    box-shadow: 0 8px 24px rgba(77,150,255,0.35);
+    display: none;
+  }
+
+  /* ---- PROGRESS ---- */
+  .progress-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    margin-bottom: 20px;
+  }
+  .progress-bar-wrap {
+    flex: 1;
+    height: 8px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent2), var(--accent1));
+    border-radius: 50px;
+    transition: width 0.6s ease;
+  }
+  .progress-label {
+    color: rgba(255,255,255,0.5);
+    font-size: 0.8rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  /* ---- QUESTION ---- */
+  .question-text {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.35rem;
+    color: white;
+    margin-bottom: 24px;
+    line-height: 1.4;
+    min-height: 60px;
+  }
+
+  .answers-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    width: 100%;
+    margin-bottom: 16px;
+  }
+
+  .answer-btn {
+    border: none;
+    border-radius: 16px;
+    padding: 18px 12px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: transform 0.15s, filter 0.2s;
+    color: white;
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    line-height: 1.3;
+    position: relative;
+    overflow: hidden;
+  }
+  .answer-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.12);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .answer-btn:hover::before { opacity: 1; }
+  .answer-btn:hover { transform: scale(1.03); }
+
+  .answer-btn.a0 { background: linear-gradient(135deg, #e63946, #c1121f); }
+  .answer-btn.a1 { background: linear-gradient(135deg, #2196f3, #0d47a1); }
+  .answer-btn.a2 { background: linear-gradient(135deg, #ff9800, #e65100); }
+  .answer-btn.a3 { background: linear-gradient(135deg, #4caf50, #1b5e20); }
+
+  .answer-btn .icon {
+    display: block;
+    font-size: 1.6rem;
+    margin-bottom: 6px;
+  }
+
+  .answer-btn.correct {
+    animation: correctPop 0.5s ease forwards;
+    outline: 4px solid var(--accent2);
+  }
+  .answer-btn.wrong {
+    filter: brightness(0.4) saturate(0.3);
+  }
+  @keyframes correctPop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.12); }
+    100% { transform: scale(1); }
+  }
+  .answer-btn:disabled { cursor: not-allowed; }
+
+  /* ---- RESULT FEEDBACK ---- */
+  .feedback-box {
+    border-radius: 16px;
+    padding: 20px;
+    width: 100%;
+    margin: 10px 0;
+    font-weight: 800;
+    font-size: 1.05rem;
+    display: none;
+    animation: fadeIn 0.4s ease;
+  }
+  .feedback-box.correct-fb {
+    background: rgba(107,203,119,0.15);
+    border: 2px solid var(--accent3);
+    color: var(--accent3);
+  }
+  .feedback-box.wrong-fb {
+    background: rgba(255,107,107,0.15);
+    border: 2px solid var(--accent1);
+    color: var(--accent1);
+  }
+
+  /* ---- SCOREBOARD ---- */
+  .score-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(255,255,255,0.05);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .score-name { font-weight: 800; color: white; font-size: 0.95rem; }
+  .score-pts {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.1rem;
+    color: var(--accent2);
+  }
+  .score-rank { font-size: 1.2rem; margin-right: 8px; }
+
+  /* ---- INTRO SCREEN ---- */
+  .emoji-big { font-size: 3rem; display: block; margin-bottom: 12px; }
+  .tag-chip {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 50px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    background: rgba(255,217,61,0.15);
+    border: 1px solid rgba(255,217,61,0.4);
+    color: var(--accent2);
+  }
+
+  /* ---- FINAL PRIZE ---- */
+  .prize-card {
+    background: linear-gradient(135deg, #1a1a40, #0d0d2b);
+    border: 2px solid rgba(255,217,61,0.4);
+    border-radius: 24px;
+    padding: 32px 24px;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .prize-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at top, rgba(255,217,61,0.08) 0%, transparent 60%);
+  }
+  .prize-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.1rem;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .prize-main {
+    font-family: 'Fredoka One', cursive;
+    font-size: 2rem;
+    color: var(--accent2);
+    line-height: 1.2;
+    margin: 12px 0;
+  }
+  .prize-sub {
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.55);
+    font-weight: 600;
+    margin-top: 10px;
+  }
+  .passport-emoji {
+    font-size: 4rem;
+    display: block;
+    animation: float 3s ease-in-out infinite;
+    margin: 10px 0;
+  }
+  @keyframes float {
+    0%,100% { transform: translateY(0) rotate(-5deg); }
+    50% { transform: translateY(-12px) rotate(5deg); }
+  }
+
+  .confetti-row {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    font-size: 1.5rem;
+    margin: 14px 0;
+    animation: shimmer 1.5s ease-in-out infinite alternate;
+  }
+  @keyframes shimmer {
+    from { opacity: 0.7; }
+    to { opacity: 1; }
+  }
+
+  /* ---- TIMER ---- */
+  .timer-ring {
+    width: 56px;
+    height: 56px;
+    position: relative;
+    margin: 0 auto 16px;
+  }
+  .timer-ring svg { transform: rotate(-90deg); }
+  .timer-ring circle {
+    fill: none;
+    stroke-width: 4;
+  }
+  .timer-ring .bg { stroke: rgba(255,255,255,0.1); }
+  .timer-ring .fg {
+    stroke: var(--accent2);
+    stroke-dasharray: 138;
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset 1s linear;
+    stroke-linecap: round;
+  }
+  .timer-num {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.2rem;
+    color: white;
+  }
+
+  /* ---- WAITING ---- */
+  .waiting-dots span {
+    display: inline-block;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--purple);
+    margin: 0 3px;
+    animation: dotBounce 1.2s ease-in-out infinite;
+  }
+  .waiting-dots span:nth-child(2) { animation-delay: 0.2s; background: var(--accent2); }
+  .waiting-dots span:nth-child(3) { animation-delay: 0.4s; background: var(--accent1); }
+  @keyframes dotBounce {
+    0%,80%,100% { transform: scale(0.8); opacity: 0.5; }
+    40% { transform: scale(1.3); opacity: 1; }
+  }
+
+  /* ---- SCOREBOARD POP ---- */
+  #screen-scoreboard .position-badge {
+    font-size: 2.5rem;
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  .mt10 { margin-top: 10px; }
+  .mt20 { margin-top: 20px; }
+  .gap { height: 80px; }
+
+  @media (max-width: 400px) {
+    h1 { font-size: 1.7rem; }
+    .answer-btn { font-size: 0.85rem; min-height: 70px; }
+    .prize-main { font-size: 1.6rem; }
+  }
+
+  @keyframes confettiFall {
+    0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Stars -->
+<div class="stars" id="stars"></div>
+
+<!-- Top bar -->
+<div class="top-bar">
+  <div class="logo">🎂 QuizFiesta</div>
+  <div class="player-tag" id="player-tag"></div>
+</div>
+
+<div class="gap"></div>
+
+<!-- ===== SCREEN: WELCOME ===== -->
+<div class="screen active" id="screen-welcome">
+  <div class="card">
+    <span class="tag-chip">🎉 Edición Especial Cumpleaños</span>
+    <div class="mascot-wrap">
+      <svg class="mascot" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+        <!-- Body -->
+        <ellipse cx="60" cy="85" rx="28" ry="22" fill="#ffd93d"/>
+        <!-- Head -->
+        <circle cx="60" cy="52" r="26" fill="#ffd93d"/>
+        <!-- Eyes -->
+        <circle cx="51" cy="48" r="5" fill="white"/>
+        <circle cx="69" cy="48" r="5" fill="white"/>
+        <circle cx="52" cy="49" r="2.5" fill="#1a1a40"/>
+        <circle cx="70" cy="49" r="2.5" fill="#1a1a40"/>
+        <!-- Smile -->
+        <path d="M50 60 Q60 70 70 60" stroke="#1a1a40" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <!-- Party hat -->
+        <polygon points="60,15 45,45 75,45" fill="#ff6b6b"/>
+        <polygon points="60,15 48,30 60,28" fill="#c1121f" opacity="0.5"/>
+        <circle cx="60" cy="14" r="4" fill="#ffd93d"/>
+        <!-- Arms -->
+        <line x1="32" y1="80" x2="15" y2="65" stroke="#ffd93d" stroke-width="7" stroke-linecap="round"/>
+        <line x1="88" y1="80" x2="105" y2="65" stroke="#ffd93d" stroke-width="7" stroke-linecap="round"/>
+        <!-- Legs -->
+        <line x1="50" y1="104" x2="45" y2="118" stroke="#ffd93d" stroke-width="6" stroke-linecap="round"/>
+        <line x1="70" y1="104" x2="75" y2="118" stroke="#ffd93d" stroke-width="6" stroke-linecap="round"/>
+        <!-- Cheeks -->
+        <circle cx="44" cy="56" r="5" fill="#ff6b6b" opacity="0.4"/>
+        <circle cx="76" cy="56" r="5" fill="#ff6b6b" opacity="0.4"/>
+      </svg>
+    </div>
+    <div class="speech-bubble">¡Bienvenido/a al quiz más divertido del año! 🎉</div>
+    <h1>El Gran Quiz del Cumpleaños</h1>
+    <p style="margin: 10px 0 20px;">¡Responde rápido, demuestra lo que sabes y gana el premio sorpresa! Solo hay un ganador... ¿serás tú?</p>
+    <div class="input-wrap">
+      <input type="text" id="player-name-input" placeholder="Escribe tu nombre..." maxlength="20" autocomplete="off"/>
+    </div>
+    <button class="btn btn-primary" onclick="startGame()">¡Jugar ahora! 🚀</button>
+  </div>
+</div>
+
+<!-- ===== SCREEN: INTRO QUESTION ===== -->
+<div class="screen" id="screen-intro">
+  <div class="card">
+    <div class="mascot-wrap">
+      <svg class="mascot" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="60" cy="85" rx="28" ry="22" fill="#6bcb77"/>
+        <circle cx="60" cy="52" r="26" fill="#6bcb77"/>
+        <circle cx="51" cy="48" r="5" fill="white"/>
+        <circle cx="69" cy="48" r="5" fill="white"/>
+        <circle cx="52.5" cy="48.5" r="2.5" fill="#1a1a40"/>
+        <circle cx="70.5" cy="48.5" r="2.5" fill="#1a1a40"/>
+        <!-- Raised eyebrow -->
+        <path d="M46 41 Q51 38 56 41" stroke="#1a1a40" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <path d="M64 41 Q69 39 74 41" stroke="#1a1a40" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <path d="M50 62 Q60 68 70 62" stroke="#1a1a40" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <polygon points="60,15 45,45 75,45" fill="#4d96ff"/>
+        <circle cx="60" cy="14" r="4" fill="#ffd93d"/>
+        <line x1="32" y1="80" x2="15" y2="65" stroke="#6bcb77" stroke-width="7" stroke-linecap="round"/>
+        <line x1="88" y1="80" x2="105" y2="65" stroke="#6bcb77" stroke-width="7" stroke-linecap="round"/>
+        <line x1="50" y1="104" x2="45" y2="118" stroke="#6bcb77" stroke-width="6" stroke-linecap="round"/>
+        <line x1="70" y1="104" x2="75" y2="118" stroke="#6bcb77" stroke-width="6" stroke-linecap="round"/>
+        <circle cx="44" cy="56" r="5" fill="#ff6b6b" opacity="0.4"/>
+        <circle cx="76" cy="56" r="5" fill="#ff6b6b" opacity="0.4"/>
+      </svg>
+    </div>
+    <div class="speech-bubble" id="intro-bubble">¡Pregunta que viene!</div>
+    <div class="tag-chip" id="intro-num">Pregunta 1 de 10</div>
+    <h2 id="intro-title">¡Prepárate!</h2>
+    <p id="intro-desc"></p>
+    <div class="waiting-dots mt20" style="margin-top:20px;">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SCREEN: QUESTION ===== -->
+<div class="screen" id="screen-question">
+  <div style="width:100%;">
+    <div class="progress-row">
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="progress-fill" style="width:10%"></div>
+      </div>
+      <div class="progress-label" id="q-counter">1/10</div>
+    </div>
+    <div class="card" style="padding: 22px 18px;">
+      <div class="timer-ring">
+        <svg viewBox="0 0 48 48">
+          <circle class="bg" cx="24" cy="24" r="22"/>
+          <circle class="fg" cx="24" cy="24" r="22" id="timer-circle"/>
+        </svg>
+        <div class="timer-num" id="timer-num">20</div>
+      </div>
+      <div class="question-text" id="question-text"></div>
+      <div class="answers-grid" id="answers-grid"></div>
+      <div class="feedback-box" id="feedback-box"></div>
+      <button class="btn btn-next" id="btn-next" onclick="nextStep()">Siguiente ➜</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SCREEN: VACILE ===== -->
+<div class="screen" id="screen-vacile">
+  <div class="card">
+    <div class="mascot-wrap">
+      <svg class="mascot" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="60" cy="85" rx="28" ry="22" fill="#c77dff"/>
+        <circle cx="60" cy="52" r="26" fill="#c77dff"/>
+        <circle cx="51" cy="48" r="5" fill="white"/>
+        <circle cx="69" cy="48" r="5" fill="white"/>
+        <circle cx="52" cy="49" r="2.5" fill="#1a1a40"/>
+        <circle cx="70" cy="49" r="2.5" fill="#1a1a40"/>
+        <!-- Smirk -->
+        <path d="M52 62 Q62 55 70 60" stroke="#1a1a40" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <polygon points="60,15 45,45 75,45" fill="#ff6b6b"/>
+        <circle cx="60" cy="14" r="4" fill="#ffd93d"/>
+        <line x1="32" y1="80" x2="15" y2="65" stroke="#c77dff" stroke-width="7" stroke-linecap="round"/>
+        <line x1="88" y1="80" x2="105" y2="65" stroke="#c77dff" stroke-width="7" stroke-linecap="round"/>
+        <line x1="50" y1="104" x2="45" y2="118" stroke="#c77dff" stroke-width="6" stroke-linecap="round"/>
+        <line x1="70" y1="104" x2="75" y2="118" stroke="#c77dff" stroke-width="6" stroke-linecap="round"/>
+        <circle cx="44" cy="56" r="5" fill="#ff9800" opacity="0.5"/>
+        <circle cx="76" cy="56" r="5" fill="#ff9800" opacity="0.5"/>
+      </svg>
+    </div>
+    <div class="speech-bubble" id="vacile-bubble">😂 ¡Vaya respuesta!</div>
+    <div id="vacile-text" style="color:white; font-weight:800; font-size:1.1rem; margin: 10px 0;"></div>
+    <div id="vacile-score" style="margin-top: 16px;"></div>
+  </div>
+</div>
+
+<!-- ===== SCREEN: FINAL ===== -->
+<div class="screen" id="screen-final">
+  <div class="card">
+    <div class="confetti-row">🎊 🎉 🥳 🎂 🎊 🎉</div>
+    <h1 style="font-size:1.8rem; margin-bottom: 8px;">¡Tenemos ganadora!</h1>
+    <p style="color:rgba(255,255,255,0.6); margin-bottom: 20px;">El juego ha terminado y solo hay una campeona indiscutible 👑</p>
+    <p style="color:rgba(255,255,255,0.5); font-size:0.9rem; font-weight:700; margin-bottom:4px;">Puntuación final</p>
+    <p id="final-score" style="font-family:'Fredoka One',cursive; font-size:2rem; color:var(--accent2); margin-bottom:20px;"></p>
+
+    <!-- COFRE -->
+    <div id="chest-wrap" style="text-align:center; margin-bottom: 10px;">
+      <div id="chest-btn-area">
+        <div style="font-size:5rem; margin-bottom:10px; animation: bounce 1.5s ease-in-out infinite;" id="chest-emoji">🎁</div>
+        <p style="color:rgba(255,255,255,0.6); font-size:0.9rem; margin-bottom:14px;">Hay un premio especial esperándote...</p>
+        <button class="btn btn-primary" onclick="openChest()" id="chest-btn">✨ Pulsa para descubrir el premio</button>
+      </div>
+
+      <!-- PREMIO oculto, se revela con animación -->
+      <div id="prize-reveal" style="display:none;">
+        <div class="prize-card" id="prize-card-inner" style="opacity:0; transform:scale(0.7) rotateX(20deg); transition: all 0.7s cubic-bezier(0.34,1.56,0.64,1);">
+          <div class="prize-title">🏆 Premio Sorpresa</div>
+          <span class="passport-emoji">✈️</span>
+          <div class="prize-main">Viaje Sorpresa<br>por Europa Familiar</div>
+          <p class="prize-sub">Sin fecha fijada · Lo elegís vosotros 🗓️</p>
+          <div style="margin-top: 18px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,0.1);">
+            <p style="color:rgba(255,255,255,0.5); font-size:0.8rem; font-weight:700; letter-spacing:2px; text-transform:uppercase;">Ganadora oficial 👑</p>
+            <p id="winner-name" style="font-family:'Fredoka One',cursive; font-size:1.8rem; color:var(--accent2); margin-top:6px;"></p>
+          </div>
+        </div>
+        <div class="confetti-row" style="margin-top:12px;">🗺️ 🏰 🗼 🌊 🍕 🌄</div>
+        <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px 18px; margin-top: 16px; text-align:center;">
+          <p style="color:var(--accent2); font-family:'Fredoka One',cursive; font-size:1rem; margin-bottom:8px; letter-spacing:1px;">💌 Con todo nuestro amor</p>
+          <p style="color:rgba(255,255,255,0.8); font-size:0.95rem; font-weight:700; line-height:1.6;">Con todo nuestro amor,<br>tu familia 💛</p>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" style="margin-top:20px; background: linear-gradient(135deg,#444,#222); box-shadow:none;" onclick="restartGame()">Jugar de nuevo 🔄</button>
+  </div>
+</div>
+
+<div class="gap"></div>
+
+<script>
+// ================================================================
+//  CONFIGURACIÓN DEL JUEGO
+//  Nombre de la ganadora (oculto, lógica interna)
+// ================================================================
+const WINNER_NAME = "Gema";
+
+// Frases de vacile cuando Gema acierta (para los demás)
+const VACILE_CORRECT = [
+  "¡Por supuesto! ¿Alguien lo dudaba? 👑",
+  "¡Imposible pillarte! 🤩",
+  "¡Una máquina! No hay quien la pare 💪",
+  "¡Lo sabía desde el principio! 🧠✨",
+  "¡Nada que hacer contra ella! 🏆",
+];
+
+// Frases de vacile cuando los demás fallan
+const VACILE_WRONG_TO_OTHERS = [
+  (name) => `Venga ${name}... ¡espabila un poco! 😂`,
+  (name) => `¿En serio ${name}? Hasta el gato lo sabía 🐱`,
+  (name) => `${name}, necesitas más café ☕😂`,
+  (name) => `Ay ${name}, eso sí que ha sido valiente... 😬`,
+  (name) => `Uf ${name}, esa no te la esperabas, ¿eh? 😜`,
+];
+
+// Frases intro antes de cada pregunta
+const INTRO_BUBBLES = [
+  "¡Atención, viene una buena! 🤔",
+  "Esta es para nota... ¡o no! 😏",
+  "¡Concentración máxima! 🧠",
+  "¡A ver quién sabe ésta! 🎯",
+  "¡La cosa se pone seria! 😤",
+  "Esta la sabe cualquiera... ¿o no? 😈",
+  "¡Última oportunidad de remontar! 🏃",
+  "¡Solo los más listos la aciertan! 🦉",
+  "¡Pregunta especial! ⭐",
+  "¡La definitiva! 👀",
+];
+
+// ================================================================
+//  PREGUNTAS DEL QUIZ
+//  correct: índice de respuesta correcta para GEMA (0-3)
+//  correct es siempre la respuesta que tiene la clave de Gema
+//  Para los demás mostramos una respuesta diferente como correcta visualmente... 
+//  en realidad: la correcta siempre puntúa para Gema
+// ================================================================
+const questions = [
+  {
+    q: "🧮 Si restamos el año de nacimiento de Gema al año actual (2026)... ¿cuántos años cumple?",
+    answers: ["1974", "1976 🎂", "1978", "1980"],
+    correct: 1,
+    intro: "¡Saca la calculadora mental! 2026 - X = 50... ¿cuál es X? 🧠",
+  },
+  {
+    q: "👟 ¿Cuál es el número de zapatilla de Gema? Pista: no es ni el 37, ni el 42...",
+    answers: ["37", "38", "40 👟", "42"],
+    correct: 2,
+    intro: "Esta la saben los que van de compras con ella... 🛍️",
+  },
+  {
+    q: "🔬 ¿A qué se dedica Gema en su trabajo?",
+    answers: ["Profesora de instituto", "Técnico de laboratorio 🔬", "Arquitecta", "Domadora de leones"],
+    correct: 1,
+    intro: "¡A ver quién ha prestado atención todos estos años! 👀",
+  },
+  {
+    q: "🤯 PREGUNTA CIENTÍFICA: ¿Cómo colapsa exactamente la función de onda cuántica y cómo se relaciona con la conciencia y la realidad?",
+    answers: ["Con mucho amor y paciencia 💛", "Pregúntale a Schrödinger y a su gato 🐱", "Nadie lo sabe, ni Einstein 🤷", "¿Perdona, qué acabo de leer?"],
+    correct: 2,
+    intro: "Esta es para los más listos de la sala... o para nadie 😂",
+  },
+  {
+    q: "💍 ¿En qué año se casaron Gema y Rafa? Pista: entre 2005 y 2010...",
+    answers: ["2005", "2006", "2007", "2008 💍"],
+    correct: 3,
+    intro: "¡Fecha señalada en el calendario familiar! 📅",
+  },
+  {
+    q: "🧮 TRAMPA MATEMÁTICA: ¿Cuánto es 1+1+1+1-1-2+4? Ojo... la respuesta correcta es la raíz cuadrada de algo 🤔",
+    answers: ["√9 (o sea 3)", "√16 (o sea 4)", "√25 (o sea 5) ✅", "√36 (o sea 6)"],
+    correct: 2,
+    intro: "¡Atención matemáticos! Esta tiene más trampa de la que parece... 😈",
+  },
+  {
+    q: "👩‍👧 ¿En qué año nació Marta, la mayor de las hijas de Gema? Pista: entre 2008 y 2011...",
+    answers: ["2008", "2009 👧", "2010", "2011"],
+    correct: 1,
+    intro: "¡La familia siempre lo primero! 💛",
+  },
+  {
+    q: "👶 ¿Y en qué año nació la pequeña de la familia? Pista: 5 años después que su hermana...",
+    answers: ["2012", "2013", "2014 👶", "2015"],
+    correct: 2,
+    intro: "¡La peque de la familia! A ver quién se acuerda... 🌸",
+  },
+  {
+    q: "🎓 ¿Cuál fue el último año en que Gema estudió? Pista: justo al llegar el milenio...",
+    answers: ["1998", "1999", "2000 🎓", "2001"],
+    correct: 2,
+    intro: "Hay que tener buena memoria para esta... 📚",
+  },
+  {
+    q: "🤨 PREGUNTA IMPOSIBLE: ¿Cuántos pelos exactos tiene Gema en su ceja derecha ahora mismo?",
+    answers: ["247 pelos justos", "La ciencia aún lo investiga 🔬", "Depende de si se las depila", "Más que Rafa en la cabeza 😂"],
+    correct: 1,
+    intro: "¡La pregunta definitiva que nadie en el mundo puede responder! 🤯",
+  },
+];
+
+// ================================================================
+//  ESTADO DEL JUEGO
+// ================================================================
+let playerName = "";
+let isWinner = false;
+let currentQ = 0;
+let score = 0;
+let answered = false;
+let timerInterval = null;
+let timerValue = 20;
+const TIMER_MAX = 20;
+const CIRCUMFERENCE = 138; // 2*PI*22
+
+// Puntuación base trucada: Gema acumula ~600pts extra invisible al final
+const GEMA_BONUS = 600;
+
+// ================================================================
+//  UTILIDADES
+// ================================================================
+function $(id) { return document.getElementById(id); }
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $(id).classList.add('active');
+}
+
+function randomFrom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function shuffle(arr) {
+  return [...arr].sort(() => Math.random() - 0.5);
+}
+
+// ================================================================
+//  STARS
+// ================================================================
+function createStars() {
+  const container = $('stars');
+  for (let i = 0; i < 60; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 2.5 + 0.5;
+    s.style.cssText = `
+      width:${size}px; height:${size}px;
+      top:${Math.random()*100}%;
+      left:${Math.random()*100}%;
+      --d:${(Math.random()*3+2).toFixed(1)}s;
+      --op:${(Math.random()*0.6+0.2).toFixed(2)};
+      animation-delay:${(Math.random()*3).toFixed(1)}s;
+    `;
+    container.appendChild(s);
+  }
+}
+
+// ================================================================
+//  START GAME
+// ================================================================
+function startGame() {
+  const input = $('player-name-input').value.trim();
+  if (!input) {
+    $('player-name-input').focus();
+    $('player-name-input').style.borderColor = 'var(--accent1)';
+    setTimeout(() => $('player-name-input').style.borderColor = '', 1000);
+    return;
+  }
+  playerName = input;
+  isWinner = playerName.toLowerCase().trim() === WINNER_NAME.toLowerCase().trim();
+
+  $('player-tag').textContent = '👤 ' + playerName;
+  $('player-tag').classList.add('show');
+
+  currentQ = 0;
+  score = 0;
+  showIntro();
+}
+
+// ================================================================
+//  INTRO BEFORE QUESTION
+// ================================================================
+function showIntro() {
+  showScreen('screen-intro');
+  const q = questions[currentQ];
+  $('intro-bubble').textContent = randomFrom(INTRO_BUBBLES);
+  $('intro-num').textContent = `Pregunta ${currentQ+1} de ${questions.length}`;
+  $('intro-title').textContent = q.intro ? `💡 Pista` : '¡Prepárate!';
+  $('intro-desc').textContent = q.intro || '';
+
+  setTimeout(() => {
+    showQuestion();
+  }, 2800);
+}
+
+// ================================================================
+//  SHOW QUESTION
+// ================================================================
+function showQuestion() {
+  showScreen('screen-question');
+  answered = false;
+  const q = questions[currentQ];
+
+  // Progress
+  const pct = ((currentQ) / questions.length) * 100;
+  $('progress-fill').style.width = pct + '%';
+  $('q-counter').textContent = `${currentQ+1}/${questions.length}`;
+
+  $('question-text').textContent = q.q;
+  $('feedback-box').style.display = 'none';
+  $('btn-next').style.display = 'none';
+
+  // Build answers
+  const icons = ['🔴','🔵','🟠','🟢'];
+  const grid = $('answers-grid');
+  grid.innerHTML = '';
+  q.answers.forEach((ans, i) => {
+    const btn = document.createElement('button');
+    btn.className = `answer-btn a${i}`;
+    btn.innerHTML = `<span class="icon">${icons[i]}</span>${ans}`;
+    btn.onclick = () => selectAnswer(i);
+    grid.appendChild(btn);
+  });
+
+  // Timer
+  startTimer();
+}
+
+// ================================================================
+//  TIMER
+// ================================================================
+function startTimer() {
+  timerValue = TIMER_MAX;
+  updateTimerUI();
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    timerValue--;
+    updateTimerUI();
+    if (timerValue <= 0) {
+      clearInterval(timerInterval);
+      if (!answered) autoAnswer();
+    }
+  }, 1000);
+}
+
+function updateTimerUI() {
+  $('timer-num').textContent = timerValue;
+  const offset = CIRCUMFERENCE * (1 - timerValue / TIMER_MAX);
+  $('timer-circle').style.strokeDashoffset = offset;
+  $('timer-circle').style.stroke = timerValue <= 5 ? 'var(--accent1)' : 'var(--accent2)';
+}
+
+function autoAnswer() {
+  // If time runs out, pick wrong answer automatically (unless winner)
+  const q = questions[currentQ];
+  let wrong = (q.correct + 1) % q.answers.length;
+  if (isWinner) wrong = q.correct;
+  selectAnswer(wrong);
+}
+
+// ================================================================
+//  SELECT ANSWER
+// ================================================================
+function selectAnswer(idx) {
+  if (answered) return;
+  answered = true;
+  clearInterval(timerInterval);
+
+  const q = questions[currentQ];
+
+  // Gema: siempre acierta con puntuación máxima
+  // Otros: aciertan ~50% de las veces pero con puntos reducidos (máx 180 vs 500 de Gema)
+  let isCorrect;
+  if (isWinner) {
+    isCorrect = true;
+  } else {
+    isCorrect = (idx === q.correct) && (Math.random() < 0.5);
+  }
+
+  const btns = document.querySelectorAll('.answer-btn');
+  btns.forEach(b => b.disabled = true);
+
+  // Mostrar correcta
+  btns[q.correct].classList.add('correct');
+  btns.forEach((b, i) => {
+    if (i !== q.correct) b.classList.add('wrong');
+  });
+
+  const fb = $('feedback-box');
+  if (isCorrect) {
+    if (isWinner) {
+      score += 400 + timerValue * 10; // Gema: 400-600 pts por pregunta
+    } else {
+      score += 80 + timerValue * 5;   // Otros: 80-180 pts por pregunta (la mitad)
+    }
+    fb.className = 'feedback-box correct-fb';
+    fb.textContent = isWinner
+      ? randomFrom(VACILE_CORRECT)
+      : '✅ ¡Correcto! ¡Bien hecho!';
+    fb.style.display = 'block';
+  } else {
+    fb.className = 'feedback-box wrong-fb';
+    fb.textContent = isWinner
+      ? '🤔 ¡Uy! Casi...'
+      : `❌ ${randomFrom(VACILE_WRONG_TO_OTHERS)(playerName)}`;
+    fb.style.display = 'block';
+  }
+
+  $('btn-next').style.display = 'block';
+}
+
+// ================================================================
+//  NEXT STEP
+// ================================================================
+function nextStep() {
+  currentQ++;
+  if (currentQ >= questions.length) {
+    showFinal();
+  } else {
+    showVacile();
+  }
+}
+
+// ================================================================
+//  VACILE SCREEN
+// ================================================================
+function showVacile() {
+  showScreen('screen-vacile');
+  const q = questions[currentQ - 1];
+
+  // Vacile messages
+  const vaciles = [
+    `¿Lo ves? ¡Imposible ganarle! 👑`,
+    `No hay quien se ponga a la altura hoy 😂`,
+    `¿Alguien va a plantarle cara? 🤷`,
+    `¡Esto ya es de otro nivel! 🚀`,
+    `¡La diferencia es abismal! 💪`,
+    `¡Siguiente pregunta! ¿Alguien se atreve? 😎`,
+    `¡El resto del grupo sudando! 😅`,
+    `¡Masterclass en directo! 🎓`,
+  ];
+
+  $('vacile-bubble').textContent = randomFrom(vaciles);
+  $('vacile-text').textContent = `Pregunta ${currentQ} de ${questions.length} completada ✅`;
+  $('vacile-score').innerHTML = `<span style="color:rgba(255,255,255,0.5);font-weight:700;font-size:0.85rem;">Tu puntuación acumulada</span><br><span style="font-family:'Fredoka One',cursive;font-size:2rem;color:var(--accent2);">${score} pts</span>`;
+
+  setTimeout(() => {
+    showIntro();
+  }, 2500);
+}
+
+// ================================================================
+//  FINAL SCREEN
+// ================================================================
+function showFinal() {
+  showScreen('screen-final');
+
+  // Mostrar puntuación trucada para Gema
+  const displayScore = isWinner ? score + GEMA_BONUS : score;
+  $('final-score').textContent = displayScore.toLocaleString() + ' pts 🏆';
+
+  // Reset cofre
+  $('chest-btn-area').style.display = 'block';
+  $('prize-reveal').style.display = 'none';
+  $('chest-emoji').textContent = '🎁';
+
+  // Nombre ganadora
+  $('winner-name').textContent = WINNER_NAME + ' 🎂';
+  if (isWinner) {
+    $('winner-name').innerHTML = WINNER_NAME + ' 🎂<br><span style="font-size:1rem;color:rgba(255,255,255,0.6);font-weight:700;">¡Eras tú! ¡Lo sabías! 🥳</span>';
+  }
+}
+
+// ================================================================
+//  OPEN CHEST (efecto cofre)
+// ================================================================
+function openChest() {
+  const btn = $('chest-btn');
+  const emoji = $('chest-emoji');
+  btn.disabled = true;
+  btn.textContent = '✨ Abriendo...';
+
+  // Animación de apertura en 3 pasos
+  emoji.style.transition = 'transform 0.3s ease';
+  emoji.style.transform = 'scale(1.4) rotate(-10deg)';
+
+  setTimeout(() => {
+    emoji.textContent = '📦';
+    emoji.style.transform = 'scale(1.6) rotate(10deg)';
+  }, 300);
+
+  setTimeout(() => {
+    emoji.textContent = '✨';
+    emoji.style.transform = 'scale(2) rotate(0deg)';
+    emoji.style.filter = 'brightness(2)';
+  }, 700);
+
+  setTimeout(() => {
+    $('chest-btn-area').style.display = 'none';
+    $('prize-reveal').style.display = 'block';
+
+    // Trigger animación entrada tarjeta
+    requestAnimationFrame(() => {
+      const card = $('prize-card-inner');
+      card.style.opacity = '1';
+      card.style.transform = 'scale(1) rotateX(0deg)';
+    });
+
+    // Confetti de emojis
+    launchConfetti();
+  }, 1200);
+}
+
+// ================================================================
+//  CONFETTI EMOJI
+// ================================================================
+function launchConfetti() {
+  const emojis = ['🎊','🎉','✨','🌟','💛','🗺️','✈️','🏆'];
+  for (let i = 0; i < 18; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      el.style.cssText = `
+        position:fixed; pointer-events:none; z-index:9999;
+        font-size:${1.5 + Math.random()}rem;
+        left:${10 + Math.random() * 80}%;
+        top:-40px;
+        animation: confettiFall ${2 + Math.random() * 2}s ease-in forwards;
+      `;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 4000);
+    }, i * 80);
+  }
+}
+
+// ================================================================
+//  RESTART
+// ================================================================
+function restartGame() {
+  $('player-name-input').value = '';
+  $('player-tag').classList.remove('show');
+  playerName = '';
+  currentQ = 0;
+  score = 0;
+  answered = false;
+  clearInterval(timerInterval);
+  showScreen('screen-welcome');
+}
+
+// ================================================================
+//  INIT
+// ================================================================
+createStars();
+
+// Enter key on input
+$('player-name-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') startGame();
+});
+</script>
+</body>
+</html>

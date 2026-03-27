@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎂 QuizFiesta — Pantalla TV</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d2b;
+    --card: #1a1a40;
+    --a1: #ff6b6b; --a2: #ffd93d; --a3: #6bcb77; --a4: #4d96ff; --purple: #c77dff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    font-family: 'Nunito', sans-serif;
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    overflow: hidden; color: white;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0; pointer-events: none;
+    background: radial-gradient(circle at 20% 30%, rgba(255,107,107,0.07) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(77,150,255,0.07) 0%, transparent 50%);
+  }
+  .stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+  .star {
+    position: absolute; border-radius: 50%; background: white;
+    animation: twinkle var(--d,3s) ease-in-out infinite alternate; opacity: 0;
+  }
+  @keyframes twinkle { to { opacity: var(--op,0.6); } }
+
+  .screen { display: none; width: 100%; max-width: 1400px; padding: 40px; position: relative; z-index: 1; animation: fadeIn 0.5s ease; }
+  .screen.active { display: flex; flex-direction: column; align-items: center; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+
+  /* LOBBY */
+  #s-lobby { text-align: center; }
+  .logo-big { font-family:'Fredoka One',cursive; font-size: 5rem; color: var(--a2); line-height:1; }
+  .subtitle { color: rgba(255,255,255,0.6); font-size: 1.4rem; margin: 12px 0 40px; }
+  .join-box {
+    background: var(--card); border-radius: 24px; padding: 40px 60px;
+    border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+    text-align: center; margin-bottom: 32px;
+  }
+  .join-label { font-size: 1.1rem; color: rgba(255,255,255,0.5); font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; }
+  .join-url { font-family:'Fredoka One',cursive; font-size: 2.4rem; color: var(--a2); word-break: break-all; }
+  .join-nfc { font-size: 1rem; color: rgba(255,255,255,0.4); margin-top: 10px; }
+
+  .players-grid {
+    display: flex; flex-wrap: wrap; gap: 16px;
+    justify-content: center; max-width: 1200px; margin-bottom: 40px; min-height: 80px;
+  }
+  .player-chip {
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 50px; padding: 10px 24px;
+    font-weight: 800; font-size: 1.1rem; color: white;
+    animation: popIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes popIn { from { transform: scale(0); opacity:0; } to { transform:scale(1); opacity:1; } }
+
+  .btn-start {
+    font-family:'Fredoka One',cursive; font-size: 1.8rem;
+    background: linear-gradient(135deg, var(--a1), var(--purple));
+    color: white; border: none; border-radius: 50px;
+    padding: 20px 60px; cursor: pointer;
+    box-shadow: 0 10px 30px rgba(255,107,107,0.4);
+    transition: transform 0.15s;
+  }
+  .btn-start:hover { transform: translateY(-3px); }
+  .btn-start:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .player-count { color: rgba(255,255,255,0.4); font-size: 1rem; margin-top: 12px; }
+
+  /* COUNTDOWN */
+  #s-countdown { text-align: center; }
+  .countdown-num {
+    font-family:'Fredoka One',cursive; font-size: 14rem; color: var(--a2);
+    animation: pulse 1s ease-in-out infinite;
+    text-shadow: 0 0 60px rgba(255,217,61,0.5);
+  }
+  @keyframes pulse { 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.08); } }
+
+  /* QUESTION */
+  #s-question { width: 100%; }
+  .q-header {
+    display: flex; align-items: center; justify-content: space-between;
+    width: 100%; margin-bottom: 24px;
+  }
+  .q-badge {
+    background: rgba(255,255,255,0.1); border-radius: 50px;
+    padding: 8px 24px; font-family:'Fredoka One',cursive; font-size: 1.1rem; color: rgba(255,255,255,0.7);
+  }
+  .timer-big {
+    font-family:'Fredoka One',cursive; font-size: 3rem; color: var(--a2);
+    width: 80px; height: 80px; border-radius: 50%;
+    background: rgba(255,217,61,0.1); border: 3px solid var(--a2);
+    display: flex; align-items: center; justify-content: center;
+    transition: color 0.3s, border-color 0.3s;
+  }
+  .timer-big.urgent { color: var(--a1); border-color: var(--a1); background: rgba(255,107,107,0.1); }
+  .q-text {
+    font-family:'Fredoka One',cursive; font-size: 3rem; color: white;
+    text-align: center; margin-bottom: 40px; line-height: 1.3;
+    max-width: 1100px; align-self: center;
+  }
+  .answers-tv {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 20px; width: 100%;
+  }
+  .ans-card {
+    border-radius: 20px; padding: 28px 32px;
+    font-size: 1.8rem; font-weight: 800; color: white;
+    display: flex; align-items: center; gap: 20px;
+    min-height: 110px; border: 3px solid transparent;
+    transition: filter 0.4s, border-color 0.3s;
+  }
+  .ans-card.a0 { background: linear-gradient(135deg,#e63946,#c1121f); }
+  .ans-card.a1 { background: linear-gradient(135deg,#2196f3,#0d47a1); }
+  .ans-card.a2 { background: linear-gradient(135deg,#ff9800,#e65100); }
+  .ans-card.a3 { background: linear-gradient(135deg,#4caf50,#1b5e20); }
+  .ans-card.correct { border-color: var(--a2) !important; animation: correctGlow 0.6s ease; }
+  .ans-card.wrong { filter: brightness(0.35) saturate(0.2); }
+  @keyframes correctGlow { 0%,100%{ box-shadow:none; } 50%{ box-shadow:0 0 40px rgba(255,217,61,0.8); } }
+  .ans-icon { font-size: 2.2rem; flex-shrink: 0; }
+  .votes-bar-wrap { margin-top: 10px; height: 8px; background: rgba(255,255,255,0.15); border-radius: 50px; overflow:hidden; }
+  .votes-bar { height: 100%; background: rgba(255,255,255,0.6); border-radius: 50px; transition: width 0.5s ease; }
+
+  /* RESULTS / SCOREBOARD */
+  #s-results { width: 100%; }
+  .results-title { font-family:'Fredoka One',cursive; font-size:2.5rem; color:var(--a2); text-align:center; margin-bottom:30px; }
+  .scores-list { display:flex; flex-direction:column; gap:12px; width:100%; max-width:800px; }
+  .score-row {
+    display:flex; align-items:center; gap:16px;
+    background: rgba(255,255,255,0.06); border-radius:16px;
+    padding: 14px 24px; border: 1px solid rgba(255,255,255,0.08);
+    animation: slideIn 0.4s ease both;
+  }
+  @keyframes slideIn { from{transform:translateX(-30px);opacity:0} to{transform:translateX(0);opacity:1} }
+  .score-pos { font-family:'Fredoka One',cursive; font-size:1.4rem; width:36px; text-align:center; }
+  .score-name { font-weight:800; font-size:1.2rem; flex:1; }
+  .score-pts { font-family:'Fredoka One',cursive; font-size:1.5rem; color:var(--a2); }
+
+  /* FINAL */
+  #s-final { text-align:center; }
+  .winner-crown { font-size:6rem; animation:float 3s ease-in-out infinite; display:block; }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-20px)} }
+  .winner-name-big { font-family:'Fredoka One',cursive; font-size:5rem; color:var(--a2); margin:10px 0; }
+  .prize-reveal-tv {
+    background: linear-gradient(135deg,#1a1a40,#0d0d2b);
+    border: 2px solid rgba(255,217,61,0.5); border-radius:24px;
+    padding: 40px 60px; margin:30px 0;
+    position:relative; overflow:hidden;
+  }
+  .prize-reveal-tv::before {
+    content:''; position:absolute; inset:0;
+    background: radial-gradient(ellipse at top, rgba(255,217,61,0.1) 0%, transparent 60%);
+  }
+  .prize-main-tv { font-family:'Fredoka One',cursive; font-size:3.5rem; color:var(--a2); line-height:1.2; }
+  .prize-sub-tv { color:rgba(255,255,255,0.5); font-size:1.2rem; margin-top:10px; font-weight:700; }
+
+  /* WAITING votes */
+  .waiting-votes {
+    display:flex; align-items:center; justify-content:center; gap:16px;
+    margin-top:20px; color:rgba(255,255,255,0.5); font-size:1rem; font-weight:700;
+  }
+  .votes-count { font-family:'Fredoka One',cursive; font-size:1.8rem; color:var(--a4); }
+
+  @keyframes confettiFall {
+    0%{transform:translateY(0) rotate(0deg);opacity:1}
+    100%{transform:translateY(110vh) rotate(720deg);opacity:0}
+  }
+</style>
+</head>
+<body>
+<div class="stars" id="stars"></div>
+
+<!-- LOBBY -->
+<div class="screen active" id="s-lobby">
+  <div class="logo-big">🎂 QuizFiesta</div>
+  <div class="subtitle">¡El quiz del cumpleaños más especial del año!</div>
+
+  <div class="join-box">
+    <div class="join-label">Únete escaneando la etiqueta NFC o entrando en</div>
+    <div class="join-url" id="join-url">Cargando...</div>
+    <div class="join-nfc">📡 También puedes acercar el móvil a la etiqueta NFC</div>
+  </div>
+
+  <div class="players-grid" id="players-grid">
+    <div style="color:rgba(255,255,255,0.3); font-size:1rem; font-weight:700; width:100%; text-align:center; padding:20px;">
+      Esperando jugadores...
+    </div>
+  </div>
+
+  <button class="btn-start" id="btn-start" onclick="startGame()" disabled>
+    🚀 ¡Empezar el juego!
+  </button>
+  <div class="player-count" id="player-count">Mínimo 1 jugador para empezar</div>
+</div>
+
+<!-- COUNTDOWN -->
+<div class="screen" id="s-countdown">
+  <div style="font-family:'Fredoka One',cursive; font-size:2rem; color:rgba(255,255,255,0.5); margin-bottom:20px;">¡El juego empieza en...</div>
+  <div class="countdown-num" id="countdown-num">3</div>
+</div>
+
+<!-- QUESTION -->
+<div class="screen" id="s-question">
+  <div class="q-header" style="width:100%">
+    <div class="q-badge" id="q-badge">Pregunta 1 de 10</div>
+    <div class="q-badge" id="q-voters">Esperando respuestas...</div>
+    <div class="timer-big" id="timer-big">20</div>
+  </div>
+  <div class="q-text" id="q-text"></div>
+  <div class="answers-tv" id="answers-tv"></div>
+  <div class="waiting-votes">
+    <span id="votes-received">0</span> / <span id="votes-total">0</span> jugadores han respondido
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div class="screen" id="s-results">
+  <div class="results-title" id="results-title">🏆 Clasificación tras la pregunta X</div>
+  <div class="scores-list" id="scores-list"></div>
+</div>
+
+<!-- FINAL -->
+<div class="screen" id="s-final">
+  <span class="winner-crown">👑</span>
+  <div style="font-family:'Fredoka One',cursive;font-size:2rem;color:rgba(255,255,255,0.6);">¡La ganadora indiscutible es...</div>
+  <div class="winner-name-big" id="winner-name-tv">Gema 🎂</div>
+  <div class="prize-reveal-tv">
+    <div style="font-size:5rem;animation:float 3s ease-in-out infinite;">✈️</div>
+    <div class="prize-main-tv">Viaje Sorpresa<br>por Europa Familiar</div>
+    <div class="prize-sub-tv">Sin fecha · Lo elegís vosotros 🗓️</div>
+  </div>
+  <div style="font-family:'Fredoka One',cursive;font-size:1.5rem;color:rgba(255,255,255,0.5);">Con todo nuestro amor, tu familia 💛</div>
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getDatabase, ref, set, get, onValue, update, remove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+// =============================================
+// CONFIGURACIÓN — pon aquí tu URL de Firebase
+// =============================================
+const FIREBASE_URL = 'https://cumple-gema-default-rtdb.europe-west1.firebasedatabase.app';
+const PLAYER_URL   = 'tunombre.github.io/cumple-gema/player.html'; // ← cambia esto
+
+const app = initializeApp({ databaseURL: FIREBASE_URL }, 'tv');
+const db  = getDatabase(app);
+
+// =============================================
+// PREGUNTAS (idénticas al juego original)
+// =============================================
+const WINNER = 'gema';
+const GEMA_BONUS = 600;
+
+const questions = [
+  { q:"🧮 Si restamos el año de nacimiento de Gema al año actual (2026)... ¿cuántos años cumple?", answers:["1974","1976 🎂","1978","1980"], correct:1, time:20 },
+  { q:"👟 ¿Cuál es el número de zapatilla de Gema? Pista: no es ni el 37, ni el 42...", answers:["37","38","40 👟","42"], correct:2, time:20 },
+  { q:"🔬 ¿A qué se dedica Gema profesionalmente?", answers:["Profesora de instituto","Técnico de laboratorio 🔬","Arquitecta","Domadora de leones"], correct:1, time:20 },
+  { q:"🤯 PREGUNTA CIENTÍFICA: ¿Cómo colapsa exactamente la función de onda cuántica y cómo se relaciona con la conciencia y la realidad?", answers:["Con mucho amor y paciencia 💛","Pregúntale a Schrödinger y a su gato 🐱","Nadie lo sabe, ni Einstein 🤷","¿Perdona, qué acabo de leer?"], correct:2, time:25 },
+  { q:"💍 ¿En qué año se casaron Gema y Rafa? Pista: entre 2005 y 2010...", answers:["2005","2006","2007","2008 💍"], correct:3, time:20 },
+  { q:"🧮 TRAMPA MATEMÁTICA: ¿Cuánto es 1+1+1+1-1-2+4? Ojo... la respuesta correcta es la raíz cuadrada de algo 🤔", answers:["√9 (o sea 3)","√16 (o sea 4)","√25 (o sea 5) ✅","√36 (o sea 6)"], correct:2, time:25 },
+  { q:"👩‍👧 ¿En qué año nació Marta, la mayor de las hijas de Gema? Pista: entre 2008 y 2011...", answers:["2008","2009 👧","2010","2011"], correct:1, time:20 },
+  { q:"👶 ¿Y en qué año nació la pequeña de la familia? Pista: 5 años después que su hermana...", answers:["2012","2013","2014 👶","2015"], correct:2, time:20 },
+  { q:"🎓 ¿Cuál fue el último año en que Gema estudió? Pista: justo al llegar el milenio...", answers:["1998","1999","2000 🎓","2001"], correct:2, time:20 },
+  { q:"🤨 PREGUNTA IMPOSIBLE: ¿Cuántos pelos exactos tiene Gema en su ceja derecha ahora mismo?", answers:["247 pelos justos","La ciencia aún lo investiga 🔬","Depende de si se las depila","Más que Rafa en la cabeza 😂"], correct:1, time:20 },
+];
+
+// =============================================
+// ESTADO
+// =============================================
+let currentQ = 0;
+let players  = {};
+let timerVal = 0;
+let timerInt = null;
+let votesExpected = 0;
+
+const $ = id => document.getElementById(id);
+
+// =============================================
+// STARS
+// =============================================
+function createStars() {
+  const c = $('stars');
+  for (let i = 0; i < 80; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const sz = Math.random() * 3 + 0.5;
+    s.style.cssText = `width:${sz}px;height:${sz}px;top:${Math.random()*100}%;left:${Math.random()*100}%;--d:${(Math.random()*3+2).toFixed(1)}s;--op:${(Math.random()*0.5+0.2).toFixed(2)};animation-delay:${(Math.random()*4).toFixed(1)}s;`;
+    c.appendChild(s);
+  }
+}
+
+// =============================================
+// SCREENS
+// =============================================
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $(id).classList.add('active');
+}
+
+// =============================================
+// FIREBASE — escuchar jugadores
+// =============================================
+$('join-url').textContent = PLAYER_URL;
+
+onValue(ref(db, 'players'), snap => {
+  players = snap.val() || {};
+  renderPlayers();
+});
+
+function renderPlayers() {
+  const grid = $('players-grid');
+  const names = Object.values(players).map(p => p.name).filter(Boolean);
+  if (names.length === 0) {
+    grid.innerHTML = '<div style="color:rgba(255,255,255,0.3);font-size:1rem;font-weight:700;width:100%;text-align:center;padding:20px;">Esperando jugadores...</div>';
+    $('btn-start').disabled = true;
+    $('player-count').textContent = 'Mínimo 1 jugador para empezar';
+    return;
+  }
+  grid.innerHTML = names.map(n => `<div class="player-chip">👤 ${n}</div>`).join('');
+  $('btn-start').disabled = false;
+  $('player-count').textContent = `${names.length} jugador${names.length > 1 ? 'es' : ''} listo${names.length > 1 ? 's' : ''}`;
+}
+
+// =============================================
+// INICIO DEL JUEGO
+// =============================================
+async function startGame() {
+  $('btn-start').disabled = true;
+  // Resetear puntuaciones
+  const updates = {};
+  Object.keys(players).forEach(k => { updates[`players/${k}/score`] = 0; });
+  await update(ref(db), updates);
+  await set(ref(db, 'game'), { state: 'countdown', q: 0 });
+  runCountdown();
+}
+
+function runCountdown() {
+  show('s-countdown');
+  let n = 3;
+  $('countdown-num').textContent = n;
+  const iv = setInterval(async () => {
+    n--;
+    if (n <= 0) {
+      clearInterval(iv);
+      await showQuestion(0);
+    } else {
+      $('countdown-num').textContent = n;
+    }
+  }, 1000);
+}
+
+// =============================================
+// PREGUNTA
+// =============================================
+async function showQuestion(idx) {
+  currentQ = idx;
+  const q = questions[idx];
+  timerVal = q.time;
+
+  // Publicar estado en Firebase para que los móviles sepan qué mostrar
+  await set(ref(db, 'game'), {
+    state: 'question',
+    q: idx,
+    timeLeft: timerVal,
+    answers: null,
+  });
+  // Borrar respuestas anteriores
+  await remove(ref(db, 'answers'));
+
+  show('s-question');
+  $('q-badge').textContent = `Pregunta ${idx + 1} de ${questions.length}`;
+  $('q-text').textContent = q.q;
+
+  const icons = ['🔴','🔵','🟠','🟢'];
+  const grid = $('answers-tv');
+  grid.innerHTML = q.answers.map((a, i) =>
+    `<div class="ans-card a${i}" id="ans-${i}">
+      <span class="ans-icon">${icons[i]}</span>
+      <div>
+        <div>${a}</div>
+        <div class="votes-bar-wrap"><div class="votes-bar" id="bar-${i}" style="width:0%"></div></div>
+      </div>
+    </div>`
+  ).join('');
+
+  votesExpected = Object.keys(players).length;
+  $('votes-total').textContent = votesExpected;
+  $('votes-received').textContent = '0';
+
+  // Escuchar respuestas en tiempo real
+  onValue(ref(db, 'answers'), snap => updateVoteBars(snap.val() || {}), { onlyOnce: false });
+
+  // Timer
+  clearInterval(timerInt);
+  updateTimerUI();
+  timerInt = setInterval(async () => {
+    timerVal--;
+    updateTimerUI();
+    await update(ref(db, 'game'), { timeLeft: timerVal });
+    if (timerVal <= 0) {
+      clearInterval(timerInt);
+      setTimeout(() => revealAnswer(), 500);
+    }
+  }, 1000);
+}
+
+function updateTimerUI() {
+  const el = $('timer-big');
+  el.textContent = timerVal;
+  el.classList.toggle('urgent', timerVal <= 5);
+}
+
+function updateVoteBars(answers) {
+  const counts = [0, 0, 0, 0];
+  let total = 0;
+  Object.values(answers).forEach(a => {
+    if (a.answer !== undefined) { counts[a.answer]++; total++; }
+  });
+  $('votes-received').textContent = total;
+  counts.forEach((c, i) => {
+    const pct = total > 0 ? Math.round(c / total * 100) : 0;
+    const bar = $('bar-' + i);
+    if (bar) bar.style.width = pct + '%';
+  });
+  // Si todos han votado, revelar antes
+  if (total >= votesExpected && votesExpected > 0) {
+    clearInterval(timerInt);
+    setTimeout(() => revealAnswer(), 800);
+  }
+}
+
+// =============================================
+// REVELAR RESPUESTA Y CALCULAR PUNTOS
+// =============================================
+async function revealAnswer() {
+  const q = questions[currentQ];
+  const answersSnap = await get(ref(db, 'answers'));
+  const answers = answersSnap.val() || {};
+
+  // Marcar correcta/incorrecta visualmente
+  for (let i = 0; i < 4; i++) {
+    const card = $('ans-' + i);
+    if (!card) continue;
+    card.classList.add(i === q.correct ? 'correct' : 'wrong');
+  }
+
+  // Calcular y actualizar puntuaciones
+  const updates = {};
+  Object.entries(answers).forEach(([pid, data]) => {
+    const player = players[pid];
+    if (!player) return;
+    const isGema = player.name.toLowerCase().trim() === WINNER;
+    let pts = 0;
+    const voted = data.answer;
+    const timeBonus = data.timeLeft || 0;
+
+    if (isGema) {
+      pts = 400 + timeBonus * 10; // Gema siempre suma mucho
+    } else if (voted === q.correct) {
+      pts = 80 + timeBonus * 5;   // Otros suman poco aunque acierren
+    }
+    if (pts > 0) {
+      const current = players[pid].score || 0;
+      updates[`players/${pid}/score`] = current + pts;
+    }
+  });
+  if (Object.keys(updates).length > 0) await update(ref(db), updates);
+
+  await set(ref(db, 'game'), { state: 'results', q: currentQ });
+  setTimeout(() => showResults(), 2500);
+}
+
+// =============================================
+// SCOREBOARD
+// =============================================
+async function showResults() {
+  const snap = await get(ref(db, 'players'));
+  const ps = snap.val() || {};
+  const sorted = Object.values(ps)
+    .filter(p => p.name)
+    .map(p => {
+      const isGema = p.name.toLowerCase().trim() === WINNER;
+      return { ...p, displayScore: (p.score || 0) + (isGema ? GEMA_BONUS : 0) };
+    })
+    .sort((a, b) => b.displayScore - a.displayScore);
+
+  show('s-results');
+  $('results-title').textContent = `🏆 Clasificación — Pregunta ${currentQ + 1}`;
+
+  const medals = ['🥇','🥈','🥉'];
+  $('scores-list').innerHTML = sorted.map((p, i) => `
+    <div class="score-row" style="animation-delay:${i * 0.1}s">
+      <div class="score-pos">${medals[i] || (i + 1)}</div>
+      <div class="score-name">${p.name}</div>
+      <div class="score-pts">${p.displayScore.toLocaleString()} pts</div>
+    </div>
+  `).join('');
+
+  setTimeout(() => {
+    if (currentQ + 1 < questions.length) {
+      showQuestion(currentQ + 1);
+    } else {
+      showFinal(sorted);
+    }
+  }, 4000);
+}
+
+// =============================================
+// FINAL
+// =============================================
+async function showFinal(sorted) {
+  await set(ref(db, 'game'), { state: 'final', winner: sorted[0]?.name || 'Gema' });
+  show('s-final');
+  $('winner-name-tv').textContent = (sorted[0]?.name || 'Gema') + ' 🎂';
+  launchConfetti();
+}
+
+function launchConfetti() {
+  const emojis = ['🎊','🎉','✨','🌟','💛','🗺️','✈️','🏆','🎂'];
+  for (let i = 0; i < 30; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      el.style.cssText = `position:fixed;pointer-events:none;z-index:9999;font-size:${2+Math.random()*2}rem;left:${5+Math.random()*90}%;top:-60px;animation:confettiFall ${2.5+Math.random()*2}s ease-in forwards;`;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 5000);
+    }, i * 100);
+  }
+}
+
+// =============================================
+// INIT
+// =============================================
+createStars();
+window.startGame = startGame;
+</script>
+</body>
+</html>

@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🎂 QuizFiesta — Jugar</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d2b; --card: #1a1a40;
+    --a1:#ff6b6b; --a2:#ffd93d; --a3:#6bcb77; --a4:#4d96ff; --purple:#c77dff;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  body {
+    background:var(--bg); font-family:'Nunito',sans-serif;
+    min-height:100vh; display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    overflow-x:hidden; color:white; padding:0;
+  }
+  body::before {
+    content:''; position:fixed; inset:0; pointer-events:none;
+    background: radial-gradient(circle at 20% 30%,rgba(255,107,107,0.08) 0%,transparent 50%),
+                radial-gradient(circle at 80% 70%,rgba(77,150,255,0.08) 0%,transparent 50%);
+  }
+  .stars { position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
+  .star {
+    position:absolute; border-radius:50%; background:white;
+    animation:twinkle var(--d,3s) ease-in-out infinite alternate; opacity:0;
+  }
+  @keyframes twinkle { to{opacity:var(--op,0.6)} }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes popIn { from{transform:scale(0.6);opacity:0} to{transform:scale(1);opacity:1} }
+  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+  @keyframes confettiFall { 0%{transform:translateY(0) rotate(0deg);opacity:1} 100%{transform:translateY(110vh) rotate(720deg);opacity:0} }
+
+  .screen { display:none; width:100%; max-width:480px; padding:20px; position:relative; z-index:1; animation:fadeIn 0.4s ease; }
+  .screen.active { display:flex; flex-direction:column; align-items:center; }
+
+  /* TOP BAR */
+  .top-bar {
+    position:fixed; top:0; left:0; right:0; z-index:100;
+    background:rgba(13,13,43,0.92); backdrop-filter:blur(10px);
+    border-bottom:1px solid rgba(255,255,255,0.06);
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 20px;
+  }
+  .logo { font-family:'Fredoka One',cursive; color:var(--a2); font-size:1.2rem; }
+  .player-chip {
+    background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15);
+    border-radius:50px; padding:5px 14px; font-size:0.8rem; font-weight:800;
+    display:none;
+  }
+  .player-chip.show { display:block; }
+
+  .gap { height:60px; }
+
+  /* CARD */
+  .card {
+    background:var(--card); border-radius:20px; padding:28px 22px;
+    width:100%; border:1px solid rgba(255,255,255,0.06);
+    box-shadow:0 20px 60px rgba(0,0,0,0.4); text-align:center;
+  }
+
+  /* MASCOT */
+  .mascot { width:100px; height:100px; animation:bounce 1.8s ease-in-out infinite; margin:0 auto 14px; display:block; }
+  .bubble {
+    background:white; color:#1a1a40; border-radius:14px;
+    padding:10px 16px; font-weight:800; font-size:0.9rem;
+    margin-bottom:16px; line-height:1.4; position:relative;
+  }
+  .bubble::after {
+    content:''; position:absolute; bottom:-10px; left:50%; transform:translateX(-50%);
+    border:5px solid transparent; border-top-color:white;
+  }
+
+  h1 { font-family:'Fredoka One',cursive; font-size:1.9rem; color:var(--a2); margin-bottom:8px; line-height:1.2; }
+  h2 { font-family:'Fredoka One',cursive; font-size:1.3rem; color:white; margin-bottom:12px; }
+  p { color:rgba(255,255,255,0.7); line-height:1.6; font-size:0.95rem; }
+
+  input[type=text] {
+    width:100%; padding:14px 18px; border-radius:12px;
+    border:2px solid rgba(255,255,255,0.15); background:rgba(255,255,255,0.07);
+    color:white; font-family:'Nunito',sans-serif; font-size:1.1rem;
+    font-weight:800; text-align:center; outline:none; transition:border-color 0.2s;
+    margin:16px 0 8px;
+  }
+  input[type=text]::placeholder { color:rgba(255,255,255,0.3); font-weight:600; }
+  input[type=text]:focus { border-color:var(--a4); }
+
+  .btn {
+    width:100%; padding:14px; border-radius:50px; border:none;
+    font-family:'Fredoka One',cursive; font-size:1.15rem; cursor:pointer;
+    transition:transform 0.15s; margin-top:10px; color:white;
+  }
+  .btn:hover { transform:translateY(-2px); }
+  .btn:active { transform:scale(0.97); }
+  .btn-primary { background:linear-gradient(135deg,var(--a1),var(--purple)); box-shadow:0 6px 20px rgba(255,107,107,0.35); }
+  .btn-disabled { background:rgba(255,255,255,0.1); color:rgba(255,255,255,0.4); cursor:not-allowed; }
+
+  /* WAITING */
+  .dots { display:flex; justify-content:center; gap:8px; margin:20px 0; }
+  .dots span {
+    width:10px; height:10px; border-radius:50%; background:var(--purple);
+    animation:dotB 1.2s ease-in-out infinite;
+  }
+  .dots span:nth-child(2){ animation-delay:0.2s; background:var(--a2); }
+  .dots span:nth-child(3){ animation-delay:0.4s; background:var(--a1); }
+  @keyframes dotB { 0%,80%,100%{transform:scale(0.8);opacity:0.5} 40%{transform:scale(1.3);opacity:1} }
+
+  /* ANSWER BUTTONS */
+  .answers-mobile { display:grid; grid-template-columns:1fr 1fr; gap:10px; width:100%; margin-top:12px; }
+  .ans-btn {
+    border:none; border-radius:14px; padding:16px 10px;
+    font-family:'Nunito',sans-serif; font-size:0.9rem; font-weight:800;
+    cursor:pointer; color:white; min-height:72px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:4px; transition:transform 0.15s, filter 0.3s; text-align:center; line-height:1.3;
+  }
+  .ans-btn:active { transform:scale(0.95); }
+  .ans-btn.a0 { background:linear-gradient(135deg,#e63946,#c1121f); }
+  .ans-btn.a1 { background:linear-gradient(135deg,#2196f3,#0d47a1); }
+  .ans-btn.a2 { background:linear-gradient(135deg,#ff9800,#e65100); }
+  .ans-btn.a3 { background:linear-gradient(135deg,#4caf50,#1b5e20); }
+  .ans-btn:disabled { cursor:not-allowed; }
+  .ans-btn.selected { outline:3px solid white; transform:scale(0.97); }
+  .ans-btn.correct-btn { outline:4px solid var(--a2); animation:popIn 0.4s ease; }
+  .ans-btn.wrong-btn { filter:brightness(0.4) saturate(0.3); }
+
+  /* TIMER BAR */
+  .timer-bar-wrap { width:100%; height:6px; background:rgba(255,255,255,0.1); border-radius:50px; overflow:hidden; margin-bottom:16px; }
+  .timer-bar-fill { height:100%; background:var(--a2); border-radius:50px; transition:width 1s linear, background 0.3s; }
+
+  /* FEEDBACK */
+  .feedback {
+    border-radius:14px; padding:16px; width:100%; margin-top:10px;
+    font-weight:800; font-size:1rem; display:none; animation:fadeIn 0.3s ease; line-height:1.4;
+  }
+  .feedback.ok { background:rgba(107,203,119,0.15); border:2px solid var(--a3); color:var(--a3); }
+  .feedback.ko { background:rgba(255,107,107,0.15); border:2px solid var(--a1); color:var(--a1); }
+
+  /* SCORE */
+  .score-big { font-family:'Fredoka One',cursive; font-size:3rem; color:var(--a2); margin:10px 0; }
+  .score-label { color:rgba(255,255,255,0.5); font-size:0.85rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; }
+
+  /* PRIZE */
+  .prize-card-m {
+    background:linear-gradient(135deg,#1a1a40,#0d0d2b);
+    border:2px solid rgba(255,217,61,0.4); border-radius:20px;
+    padding:28px 20px; width:100%; text-align:center;
+    position:relative; overflow:hidden; margin:12px 0;
+  }
+  .prize-card-m::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at top,rgba(255,217,61,0.08) 0%,transparent 60%); }
+  .prize-main-m { font-family:'Fredoka One',cursive; font-size:1.7rem; color:var(--a2); line-height:1.2; margin:10px 0; }
+  .float-emoji { font-size:3.5rem; display:block; animation:bounce 3s ease-in-out infinite; }
+
+  /* CHEST */
+  #chest-area { text-align:center; width:100%; }
+  .chest-emoji { font-size:4rem; display:block; margin:10px 0; }
+</style>
+</head>
+<body>
+<div class="stars" id="stars"></div>
+
+<div class="top-bar">
+  <div class="logo">🎂 QuizFiesta</div>
+  <div class="player-chip" id="player-chip"></div>
+</div>
+
+<div class="gap"></div>
+
+<!-- REGISTRO -->
+<div class="screen active" id="s-register">
+  <div class="card">
+    <svg class="mascot" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="60" cy="85" rx="28" ry="22" fill="#ffd93d"/>
+      <circle cx="60" cy="52" r="26" fill="#ffd93d"/>
+      <circle cx="51" cy="48" r="5" fill="white"/><circle cx="69" cy="48" r="5" fill="white"/>
+      <circle cx="52" cy="49" r="2.5" fill="#1a1a40"/><circle cx="70" cy="49" r="2.5" fill="#1a1a40"/>
+      <path d="M50 60 Q60 70 70 60" stroke="#1a1a40" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <polygon points="60,15 45,45 75,45" fill="#ff6b6b"/>
+      <circle cx="60" cy="14" r="4" fill="#ffd93d"/>
+      <line x1="32" y1="80" x2="15" y2="65" stroke="#ffd93d" stroke-width="7" stroke-linecap="round"/>
+      <line x1="88" y1="80" x2="105" y2="65" stroke="#ffd93d" stroke-width="7" stroke-linecap="round"/>
+      <line x1="50" y1="104" x2="45" y2="118" stroke="#ffd93d" stroke-width="6" stroke-linecap="round"/>
+      <line x1="70" y1="104" x2="75" y2="118" stroke="#ffd93d" stroke-width="6" stroke-linecap="round"/>
+      <circle cx="44" cy="56" r="5" fill="#ff6b6b" opacity="0.4"/><circle cx="76" cy="56" r="5" fill="#ff6b6b" opacity="0.4"/>
+    </svg>
+    <div class="bubble">¡Bienvenido/a al quiz del cumpleaños! 🎉</div>
+    <h1>¿Cómo te llamas?</h1>
+    <p>Escribe tu nombre para unirte al juego</p>
+    <input type="text" id="name-input" placeholder="Tu nombre..." maxlength="18" autocomplete="off"/>
+    <button class="btn btn-primary" onclick="joinGame()">¡Unirme al juego! 🚀</button>
+  </div>
+</div>
+
+<!-- SALA DE ESPERA -->
+<div class="screen" id="s-waiting">
+  <div class="card">
+    <svg class="mascot" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="60" cy="85" rx="28" ry="22" fill="#6bcb77"/>
+      <circle cx="60" cy="52" r="26" fill="#6bcb77"/>
+      <circle cx="51" cy="48" r="5" fill="white"/><circle cx="69" cy="48" r="5" fill="white"/>
+      <circle cx="52.5" cy="48.5" r="2.5" fill="#1a1a40"/><circle cx="70.5" cy="48.5" r="2.5" fill="#1a1a40"/>
+      <path d="M50 62 Q60 68 70 62" stroke="#1a1a40" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <polygon points="60,15 45,45 75,45" fill="#4d96ff"/><circle cx="60" cy="14" r="4" fill="#ffd93d"/>
+      <line x1="32" y1="80" x2="15" y2="65" stroke="#6bcb77" stroke-width="7" stroke-linecap="round"/>
+      <line x1="88" y1="80" x2="105" y2="65" stroke="#6bcb77" stroke-width="7" stroke-linecap="round"/>
+      <line x1="50" y1="104" x2="45" y2="118" stroke="#6bcb77" stroke-width="6" stroke-linecap="round"/>
+      <line x1="70" y1="104" x2="75" y2="118" stroke="#6bcb77" stroke-width="6" stroke-linecap="round"/>
+    </svg>
+    <div class="bubble" id="wait-bubble">¡Ya estás dentro! Esperando que empiece el juego... 👀</div>
+    <h2>¡Listo, <span id="wait-name"></span>!</h2>
+    <p>El presentador arrancará el juego desde la TV.<br>Estate atento/a a la pantalla grande 📺</p>
+    <div class="dots"><span></span><span></span><span></span></div>
+    <div style="color:rgba(255,255,255,0.4);font-size:0.8rem;font-weight:700;">Jugarán contigo:</div>
+    <div id="wait-players" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;"></div>
+  </div>
+</div>
+
+<!-- PREGUNTA -->
+<div class="screen" id="s-playing">
+  <div style="width:100%;">
+    <div class="timer-bar-wrap"><div class="timer-bar-fill" id="timer-bar" style="width:100%"></div></div>
+    <div class="card" style="padding:18px;">
+      <div style="color:rgba(255,255,255,0.4);font-size:0.75rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;" id="q-num">Pregunta 1 de 10</div>
+      <div style="font-family:'Fredoka One',cursive;font-size:1.15rem;color:white;line-height:1.4;margin-bottom:16px;" id="q-text-m"></div>
+      <div class="answers-mobile" id="answers-mobile"></div>
+      <div class="feedback" id="feedback-m"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ENTRE PREGUNTAS -->
+<div class="screen" id="s-between">
+  <div class="card">
+    <svg class="mascot" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="60" cy="85" rx="28" ry="22" fill="#c77dff"/>
+      <circle cx="60" cy="52" r="26" fill="#c77dff"/>
+      <circle cx="51" cy="48" r="5" fill="white"/><circle cx="69" cy="48" r="5" fill="white"/>
+      <circle cx="52" cy="49" r="2.5" fill="#1a1a40"/><circle cx="70" cy="49" r="2.5" fill="#1a1a40"/>
+      <path d="M52 62 Q62 55 70 60" stroke="#1a1a40" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <polygon points="60,15 45,45 75,45" fill="#ff6b6b"/><circle cx="60" cy="14" r="4" fill="#ffd93d"/>
+      <line x1="32" y1="80" x2="15" y2="65" stroke="#c77dff" stroke-width="7" stroke-linecap="round"/>
+      <line x1="88" y1="80" x2="105" y2="65" stroke="#c77dff" stroke-width="7" stroke-linecap="round"/>
+      <line x1="50" y1="104" x2="45" y2="118" stroke="#c77dff" stroke-width="6" stroke-linecap="round"/>
+      <line x1="70" y1="104" x2="75" y2="118" stroke="#c77dff" stroke-width="6" stroke-linecap="round"/>
+    </svg>
+    <div class="bubble" id="between-bubble">¡Mira el marcador en la pantalla grande! 👀</div>
+    <div class="score-label">Tu puntuación</div>
+    <div class="score-big" id="my-score">0 pts</div>
+    <div style="color:rgba(255,255,255,0.4);font-size:0.85rem;font-weight:700;" id="between-sub">Siguiente pregunta en unos segundos...</div>
+  </div>
+</div>
+
+<!-- FINAL -->
+<div class="screen" id="s-final-m">
+  <div class="card">
+    <div style="font-size:2rem;margin-bottom:8px;">🎊 🎉 🥳</div>
+    <h1 style="font-size:1.5rem;margin-bottom:6px;">¡Fin del juego!</h1>
+    <div class="score-label">Tu puntuación final</div>
+    <div class="score-big" id="final-score-m">0 pts</div>
+
+    <!-- COFRE -->
+    <div id="chest-area">
+      <div id="chest-btn-area">
+        <span class="chest-emoji" id="chest-emoji">🎁</span>
+        <p style="color:rgba(255,255,255,0.5);font-size:0.85rem;margin-bottom:12px;">Hay un premio especial...</p>
+        <button class="btn btn-primary" onclick="openChest()">✨ Descubrir el premio</button>
+      </div>
+      <div id="prize-reveal-m" style="display:none;">
+        <div class="prize-card-m" id="prize-inner-m" style="opacity:0;transform:scale(0.7);transition:all 0.7s cubic-bezier(0.34,1.56,0.64,1);">
+          <div style="color:rgba(255,255,255,0.4);font-size:0.7rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">🏆 Premio Sorpresa</div>
+          <span class="float-emoji">✈️</span>
+          <div class="prize-main-m">Viaje Sorpresa<br>por Europa Familiar</div>
+          <div style="color:rgba(255,255,255,0.5);font-size:0.8rem;font-weight:700;margin-top:8px;">Sin fecha · Lo elegís vosotros 🗓️</div>
+          <div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.1);">
+            <div style="color:rgba(255,255,255,0.4);font-size:0.7rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;">Ganadora 👑</div>
+            <div id="winner-name-m" style="font-family:'Fredoka One',cursive;font-size:1.6rem;color:var(--a2);margin-top:4px;"></div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:center;gap:6px;font-size:1.3rem;margin:12px 0;">🗺️ 🏰 🗼 🌊 🍕 🌄</div>
+        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:16px;margin-top:10px;">
+          <div style="color:var(--a2);font-family:'Fredoka One',cursive;font-size:0.9rem;margin-bottom:6px;">💌 Con todo nuestro amor</div>
+          <div style="color:rgba(255,255,255,0.8);font-size:0.9rem;font-weight:700;line-height:1.6;">Con todo nuestro amor,<br>tu familia 💛</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getDatabase, ref, set, get, onValue, update, push } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+// =============================================
+// CONFIGURACIÓN
+// =============================================
+const FIREBASE_URL = 'https://cumple-gema-default-rtdb.europe-west1.firebasedatabase.app';
+const WINNER       = 'gema';
+const GEMA_BONUS   = 600;
+
+const app = initializeApp({ databaseURL: FIREBASE_URL }, 'player');
+const db  = getDatabase(app);
+
+const questions = [
+  { q:"🧮 Si restamos el año de nacimiento de Gema al año actual (2026)... ¿cuántos años cumple?", answers:["1974","1976 🎂","1978","1980"], correct:1, time:20 },
+  { q:"👟 ¿Cuál es el número de zapatilla de Gema? Pista: no es ni el 37, ni el 42...", answers:["37","38","40 👟","42"], correct:2, time:20 },
+  { q:"🔬 ¿A qué se dedica Gema profesionalmente?", answers:["Profesora de instituto","Técnico de laboratorio 🔬","Arquitecta","Domadora de leones"], correct:1, time:20 },
+  { q:"🤯 PREGUNTA CIENTÍFICA: ¿Cómo colapsa exactamente la función de onda cuántica y cómo se relaciona con la conciencia y la realidad?", answers:["Con mucho amor y paciencia 💛","Pregúntale a Schrödinger y a su gato 🐱","Nadie lo sabe, ni Einstein 🤷","¿Perdona, qué acabo de leer?"], correct:2, time:25 },
+  { q:"💍 ¿En qué año se casaron Gema y Rafa? Pista: entre 2005 y 2010...", answers:["2005","2006","2007","2008 💍"], correct:3, time:20 },
+  { q:"🧮 TRAMPA MATEMÁTICA: ¿Cuánto es 1+1+1+1-1-2+4? Ojo... la respuesta correcta es la raíz cuadrada de algo 🤔", answers:["√9 (o sea 3)","√16 (o sea 4)","√25 (o sea 5) ✅","√36 (o sea 6)"], correct:2, time:25 },
+  { q:"👩‍👧 ¿En qué año nació Marta, la mayor de las hijas de Gema? Pista: entre 2008 y 2011...", answers:["2008","2009 👧","2010","2011"], correct:1, time:20 },
+  { q:"👶 ¿Y en qué año nació la pequeña de la familia? Pista: 5 años después que su hermana...", answers:["2012","2013","2014 👶","2015"], correct:2, time:20 },
+  { q:"🎓 ¿Cuál fue el último año en que Gema estudió? Pista: justo al llegar el milenio...", answers:["1998","1999","2000 🎓","2001"], correct:2, time:20 },
+  { q:"🤨 PREGUNTA IMPOSIBLE: ¿Cuántos pelos exactos tiene Gema en su ceja derecha ahora mismo?", answers:["247 pelos justos","La ciencia aún lo investiga 🔬","Depende de si se las depila","Más que Rafa en la cabeza 😂"], correct:1, time:20 },
+];
+
+const VACILE_CORRECT   = ["¡Por supuesto! ¿Alguien lo dudaba? 👑","¡Imposible pillarte! 🤩","¡Una máquina! 💪","¡Lo sabía desde el principio! 🧠","¡Nada que hacer contra ti! 🏆"];
+const VACILE_WRONG     = (n) => [`Venga ${n}... ¡espabila un poco! 💛`,`¿En serio ${n}? Hasta el gato lo sabía 🐱`,`${n}, necesitas más café ☕`,`Ay ${n}, eso sí que ha sido valiente 😬`,`Uf ${n}, esa no te la esperabas 😜`];
+
+const $ = id => document.getElementById(id);
+
+let myId     = null;
+let myName   = '';
+let isWinner = false;
+let myScore  = 0;
+let answered = false;
+let timerInt = null;
+let curQ     = -1;
+let curTime  = 20;
+
+// =============================================
+// STARS
+// =============================================
+function createStars() {
+  const c = $('stars');
+  for (let i = 0; i < 50; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const sz = Math.random() * 2.5 + 0.5;
+    s.style.cssText = `width:${sz}px;height:${sz}px;top:${Math.random()*100}%;left:${Math.random()*100}%;--d:${(Math.random()*3+2).toFixed(1)}s;--op:${(Math.random()*0.5+0.2).toFixed(2)};animation-delay:${(Math.random()*4).toFixed(1)}s;`;
+    c.appendChild(s);
+  }
+}
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $(id).classList.add('active');
+}
+
+function randomFrom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+// =============================================
+// REGISTRO
+// =============================================
+async function joinGame() {
+  const name = $('name-input').value.trim();
+  if (!name) {
+    $('name-input').style.borderColor = 'var(--a1)';
+    setTimeout(() => $('name-input').style.borderColor = '', 1000);
+    return;
+  }
+
+  // Comprobar si ya existe el jugador (por si recarga)
+  const existing = localStorage.getItem('quizPlayerId');
+  if (existing) {
+    const snap = await get(ref(db, `players/${existing}`));
+    if (snap.exists()) { myId = existing; myName = snap.val().name; }
+  }
+
+  if (!myId) {
+    const newRef = push(ref(db, 'players'));
+    myId = newRef.key;
+    await set(newRef, { name, score: 0 });
+    localStorage.setItem('quizPlayerId', myId);
+  }
+
+  myName   = name;
+  isWinner = name.toLowerCase().trim() === WINNER;
+
+  $('player-chip').textContent = '👤 ' + myName;
+  $('player-chip').classList.add('show');
+  $('wait-name').textContent = myName;
+
+  show('s-waiting');
+  listenOtherPlayers();
+  listenGame();
+}
+
+function listenOtherPlayers() {
+  onValue(ref(db, 'players'), snap => {
+    const ps = snap.val() || {};
+    const names = Object.values(ps).map(p => p.name).filter(Boolean);
+    $('wait-players').innerHTML = names.map(n =>
+      `<div style="background:rgba(255,255,255,0.08);border-radius:50px;padding:5px 14px;font-size:0.8rem;font-weight:800;">👤 ${n}</div>`
+    ).join('');
+  });
+}
+
+// =============================================
+// ESCUCHAR ESTADO DEL JUEGO
+// =============================================
+function listenGame() {
+  onValue(ref(db, 'game'), snap => {
+    const game = snap.val();
+    if (!game) return;
+
+    if (game.state === 'countdown') {
+      show('s-waiting');
+      $('wait-bubble').textContent = '¡El juego empieza ahora! ¡Prepárate! 🚀';
+    }
+
+    if (game.state === 'question' && game.q !== curQ) {
+      curQ     = game.q;
+      answered = false;
+      curTime  = questions[curQ].time;
+      showQuestion(curQ, game.timeLeft ?? curTime);
+    }
+
+    if (game.state === 'results') {
+      clearInterval(timerInt);
+      showBetween();
+    }
+
+    if (game.state === 'final') {
+      clearInterval(timerInt);
+      showFinal(game.winner);
+    }
+  });
+}
+
+// =============================================
+// PREGUNTA EN MÓVIL
+// =============================================
+function showQuestion(idx, timeLeft) {
+  const q = questions[idx];
+  curTime = timeLeft ?? q.time;
+  show('s-playing');
+  answered = false;
+
+  $('q-num').textContent = `Pregunta ${idx + 1} de ${questions.length}`;
+  $('q-text-m').textContent = q.q;
+  $('feedback-m').style.display = 'none';
+
+  const icons = ['🔴','🔵','🟠','🟢'];
+  $('answers-mobile').innerHTML = q.answers.map((a, i) =>
+    `<button class="ans-btn a${i}" onclick="selectAnswer(${i})" id="mob-ans-${i}">
+      <span style="font-size:1.3rem">${icons[i]}</span>${a}
+    </button>`
+  ).join('');
+
+  // Timer bar
+  clearInterval(timerInt);
+  updateTimerBar();
+  timerInt = setInterval(() => {
+    curTime--;
+    updateTimerBar();
+    if (curTime <= 0) {
+      clearInterval(timerInt);
+      if (!answered) autoAnswer(idx);
+    }
+  }, 1000);
+}
+
+function updateTimerBar() {
+  const q = questions[curQ];
+  const pct = Math.max(0, curTime / q.time * 100);
+  const bar = $('timer-bar');
+  if (bar) {
+    bar.style.width = pct + '%';
+    bar.style.background = pct < 25 ? 'var(--a1)' : 'var(--a2)';
+  }
+}
+
+function autoAnswer(idx) {
+  const q = questions[idx];
+  const wrong = (q.correct + 1) % 4;
+  selectAnswer(isWinner ? q.correct : wrong);
+}
+
+// =============================================
+// SELECCIONAR RESPUESTA
+// =============================================
+window.selectAnswer = async function(idx) {
+  if (answered) return;
+  answered = true;
+  clearInterval(timerInt);
+
+  const q = questions[curQ];
+  let isCorrect;
+  if (isWinner) {
+    isCorrect = true;
+  } else {
+    isCorrect = (idx === q.correct) && (Math.random() < 0.5);
+  }
+
+  // Enviar respuesta a Firebase
+  await set(ref(db, `answers/${myId}`), {
+    answer: isWinner ? q.correct : idx,
+    timeLeft: curTime,
+    name: myName,
+  });
+
+  // Feedback visual
+  const btns = document.querySelectorAll('.ans-btn');
+  btns.forEach(b => b.disabled = true);
+  btns[q.correct].classList.add('correct-btn');
+  btns.forEach((b, i) => { if (i !== q.correct) b.classList.add('wrong-btn'); });
+
+  const fb = $('feedback-m');
+  if (isCorrect) {
+    const pts = isWinner ? 400 + curTime * 10 : 80 + curTime * 5;
+    myScore += pts;
+    fb.className = 'feedback ok';
+    fb.textContent = isWinner ? randomFrom(VACILE_CORRECT) : '✅ ¡Correcto! ¡Bien hecho!';
+  } else {
+    fb.className = 'feedback ko';
+    fb.textContent = isWinner ? '🤔 ¡Uy! Casi...' : randomFrom(VACILE_WRONG(myName));
+  }
+  fb.style.display = 'block';
+}
+
+// =============================================
+// ENTRE PREGUNTAS
+// =============================================
+function showBetween() {
+  show('s-between');
+  const display = myScore + (isWinner ? GEMA_BONUS : 0);
+  $('my-score').textContent = display.toLocaleString() + ' pts';
+
+  const vaciles = ["¡Mira el marcador en la pantalla grande! 📺","¡Siguiente pregunta en unos segundos! 🎯","¿Estás listo/a para la siguiente? 😤","¡Sigue así! 💪","¡La diferencia se nota! 👀"];
+  $('between-bubble').textContent = randomFrom(vaciles);
+  $('between-sub').textContent = isWinner ? '¡Vas arrasando! 👑' : 'Siguiente pregunta en unos segundos...';
+}
+
+// =============================================
+// FINAL
+// =============================================
+function showFinal(winner) {
+  show('s-final-m');
+  const display = myScore + (isWinner ? GEMA_BONUS : 0);
+  $('final-score-m').textContent = display.toLocaleString() + ' pts';
+  $('winner-name-m').textContent = (winner || 'Gema') + ' 🎂';
+
+  // Reset cofre
+  $('chest-btn-area').style.display = 'block';
+  $('prize-reveal-m').style.display = 'none';
+  $('chest-emoji').textContent = '🎁';
+}
+
+// =============================================
+// ABRIR COFRE
+// =============================================
+window.openChest = function() {
+  const emoji = $('chest-emoji');
+  $('chest-btn-area').querySelector('button').disabled = true;
+  emoji.style.transition = 'transform 0.3s ease';
+  emoji.style.transform = 'scale(1.4) rotate(-10deg)';
+  setTimeout(() => { emoji.textContent = '📦'; emoji.style.transform = 'scale(1.6) rotate(10deg)'; }, 300);
+  setTimeout(() => { emoji.textContent = '✨'; emoji.style.transform = 'scale(2)'; }, 700);
+  setTimeout(() => {
+    $('chest-btn-area').style.display = 'none';
+    $('prize-reveal-m').style.display = 'block';
+    requestAnimationFrame(() => {
+      const card = $('prize-inner-m');
+      card.style.opacity = '1';
+      card.style.transform = 'scale(1)';
+    });
+    launchConfetti();
+  }, 1200);
+}
+
+function launchConfetti() {
+  const emojis = ['🎊','🎉','✨','🌟','💛','🗺️','✈️','🏆'];
+  for (let i = 0; i < 16; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      el.style.cssText = `position:fixed;pointer-events:none;z-index:9999;font-size:${1.5+Math.random()}rem;left:${10+Math.random()*80}%;top:-40px;animation:confettiFall ${2+Math.random()*2}s ease-in forwards;`;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 4000);
+    }, i * 80);
+  }
+}
+
+// =============================================
+// INIT
+// =============================================
+createStars();
+$('name-input').addEventListener('keydown', e => { if (e.key === 'Enter') joinGame(); });
+window.joinGame = joinGame;
+</script>
+</body>
+</html>
