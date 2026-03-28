@@ -539,6 +539,18 @@ function launchConfetti() {
 // =============================================
 createStars();
 window.startGame = startGame;
+
+// =============================================
+// RESET AUTOMÁTICO AL ABRIR LA TV
+// =============================================
+async function resetGame() {
+  await set(ref(db, 'players'), null);
+  await set(ref(db, 'answers'), null);
+  await set(ref(db, 'game'), { state: 'lobby' });
+  console.log('🧹 Juego reseteado');
+}
+
+resetGame();
 </script>
 </body>
 </html>
