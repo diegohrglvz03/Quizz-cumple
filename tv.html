@@ -264,7 +264,7 @@ const questions = [
   { q:"🤯 PREGUNTA CIENTÍFICA: ¿Cómo colapsa exactamente la función de onda cuántica y cómo se relaciona con la conciencia y la realidad?", answers:["Con mucho amor y paciencia 💛","Pregúntale a Schrödinger y a su gato 🐱","Nadie lo sabe, ni Einstein 🤷","¿Perdona, qué acabo de leer?"], correct:2, time:25 },
   { q:"💍 ¿En qué año se casaron Gema y Rafa? Pista: entre 2005 y 2010...", answers:["2005","2006","2007","2008 💍"], correct:3, time:20 },
   { q:"🧮 TRAMPA MATEMÁTICA: ¿Cuánto es 1+1+1+1-1-2+4? Ojo... la respuesta correcta es la raíz cuadrada de algo 🤔", answers:["√9 (o sea 3)","√16 (o sea 4)","√25 (o sea 5) ✅","√36 (o sea 6)"], correct:2, time:25 },
-  { q:"👩‍👧 ¿En qué año nació Marta, la mayor de las hijas de Gema? Pista: entre 2008 y 2011...", answers:["2008","2009 👧","2010","2011"], correct:1, time:20 },
+  { q:"👩‍👧 ¿En qué año nació Ángela, la mayor de las hijas de Gema? Pista: entre 2008 y 2011...", answers:["2008","2009 👧","2010","2011"], correct:1, time:20 },
   { q:"👶 ¿Y en qué año nació la pequeña de la familia? Pista: 5 años después que su hermana...", answers:["2012","2013","2014 👶","2015"], correct:2, time:20 },
   { q:"🎓 ¿Cuál fue el último año en que Gema estudió? Pista: justo al llegar el milenio...", answers:["1998","1999","2000 🎓","2001"], correct:2, time:20 },
   { q:"🤨 PREGUNTA IMPOSIBLE: ¿Cuántos pelos exactos tiene Gema en su ceja derecha ahora mismo?", answers:["247 pelos justos","La ciencia aún lo investiga 🔬","Depende de si se las depila","Más que Rafa en la cabeza 😂"], correct:1, time:20 },
@@ -552,6 +552,18 @@ function launchConfetti() {
 // =============================================
 createStars();
 window.startGame = startGame;
+
+// =============================================
+// RESET AUTOMÁTICO AL ABRIR LA TV
+// =============================================
+async function resetGame() {
+  await set(ref(db, 'players'), null);
+  await set(ref(db, 'answers'), null);
+  await set(ref(db, 'game'), { state: 'lobby' });
+  console.log('🧹 Juego reseteado');
+}
+
+resetGame();
 </script>
 </body>
 </html>
